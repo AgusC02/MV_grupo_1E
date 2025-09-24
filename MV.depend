@@ -1,0 +1,29 @@
+# depslib dependency file v1.0
+1757820898 source:c:\users\aagus\onedrive\escritorio\mv_2025\maquina-virtual-\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"MV.h"
+
+1757043756 c:\users\aagus\onedrive\escritorio\mv_2025\maquina-virtual-\mv.h
+
+1757044115 source:c:\users\aagus\onedrive\escritorio\mv_2025\maquina-virtual-\mv.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"MV.h"
+
+1757992026 source:c:\users\aagus\onedrive\escritorio\mv_actual\maquina-virtual\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"MV.h"
+
+1757991867 c:\users\aagus\onedrive\escritorio\mv_actual\maquina-virtual\mv.h
+
+1758253000 source:c:\users\aagus\onedrive\escritorio\mv_actual\maquina-virtual\mv.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"MV.h"
+
