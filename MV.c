@@ -1279,7 +1279,7 @@ void EscriboDissasembler(TMV MV, char VecFunciones[CANTFUNC][5],char VecRegistro
             CodReg=(MV.R[OP1] >>16) & 0x1F;
             if (CodReg !=0)
                 if (CodReg >= 10 && CodReg<=15)
-                  printf("[%c%s%c+%d]",'E',VecRegistros[CodReg],'X',Offset);
+                  printf("[%c%s+%d]",'E',VecRegistros[CodReg],Offset);
                 else
                     printf("[%s+%d]",VecRegistros[CodReg],Offset);
             else
@@ -1309,7 +1309,7 @@ void EscriboDissasembler(TMV MV, char VecFunciones[CANTFUNC][5],char VecRegistro
                 Offset= MV.R[OP2] & 0XFFFF;
                 CodReg=(MV.R[OP2] >>16) & 0x1F;
                 if (CodReg >= 10 && CodReg<=15)
-                  printf("[%c%s%c+%d]",'E',VecRegistros[CodReg],'X',Offset);
+                  printf("[%c%s+%d]",'E',VecRegistros[CodReg],Offset);
                 else
                     printf("[%s+%d]",VecRegistros[CodReg],Offset);
             }
