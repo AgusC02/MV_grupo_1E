@@ -251,7 +251,7 @@ void dep_arg(int argc, char *argv[], TMV *MV){
 
 void initregsegmentos(TMV *MV){
     int i;
-    for(i=1;i<IP;i++){
+    for(i=DS;i<PS+1;i++){
         MV->R[i]=-1;
     }
 }
@@ -273,8 +273,6 @@ void agregasegmentos(unsigned short int tam, int reg_indx,TMV *MV, int *tds_indx
         }
         (*tds_indx)++;
     }
-    else
-        MV->R[reg_indx]=-1;
 
 }
 
@@ -294,7 +292,7 @@ short int TamCS;
         // Agregue dos parametros flag en MV (mem_size y param).
         initregsegmentos(MV);
 
-        agregasegmentos(MV->size_paramsegment,-1,MV,&indicetds,sizeac);
+        agregasegmentos(MV->size_paramsegment,PS,MV,&indicetds,sizeac);
         sizeac+=MV->size_paramsegment;  //esto tendria que ser el tamaño del paramsegm
 
         agregasegmentos(header.tamKS,KS,MV,&indicetds,sizeac);
@@ -615,19 +613,22 @@ int direccionamiento_logtofis(TMV *MV, int puntero, int bytes){
 
     TamSeg = ((MV->TDS[(puntero & 0XFFFF0000) >> 16] ) & 0XFFFF);
     LimiteSup = DirBase + TamSeg;
-    //printf("%d %d %d \n",DirFisica,DirBase,LimiteSup);
-    //printf("%d %d \n",DirBase,TamSeg);
+
+    //printf("%d \n",(puntero & 0XFFFF0000) >> 16);
+
 
     if (bytes!=0){ //Seteo bytes en cero cuando recorro el CS para leer las instrucciones, para la lectura y escritura en memoria bytes es la cantidad de bytes a escribir o leer
         MV->R[LAR] = puntero; // dir logica
         MV->R[MAR] = (bytes << 16) + DirFisica; // bytes a cargar, siempre es 4? // Dir fisica
 
     }
-    // En leo o escribo memoria modifico MBR
+    // En leo o escriboescribo memoria modifico MBR
 
     if (!( (DirBase <= DirFisica ) && (DirFisica+bytes <= LimiteSup  ) )){ // FALTA EL +4 EN DIR FISICA SI ES MEMORIA
+        {
         generaerror(ERRSEGMF);
         return -1;        // Aca nunca va a llegar si llama a generaerror, porque la ultima instruccion de la funcion es abort().
+        }
     }
     else
         return DirBase+Offset;
@@ -653,12 +654,9 @@ void LeoInstruccion(TMV* MV){
 
     finCS=posmaxCODESEGMENT(MV);
 
-    //printf("%d \n",MV->R[IP]);
     while(direccionamiento_logtofis(MV,MV->R[IP],0)<finCS){ //MIENTRAS HAYA INSTRUCCIONES PARA LEER (BYTE A BYTE).
-
         DirFisicaActual = direccionamiento_logtofis(MV,MV->R[IP],0);
         ComponentesInstruccion(MV,DirFisicaActual,&CantOp); //TIPO INSTRUCCION, identifico los tipos y cantidad de operadores y el codigo de operacion
-
         if ((MV->R[OPC] >= 0) && ((MV->R[OPC] <= 8) || ((MV->R[OPC]<=31) && (MV->R[OPC]>=11))) ){ // Si el codigo de operacion es valido
             if (CantOp != 0) //Guardo los operandos que actuan en un auxiliar, y tambien guardo el tamanio del operando
                SeteoValorOp(MV, DirFisicaActual); // Distingue entre uno o dos operandos a setear
@@ -804,11 +802,13 @@ void EscriboEnMemoria(TMV *MV,int Op, int Valor){ // Guarda el valor en 4 bytes 
 
 
     offset= Op & 0XFFFF;
+    offset<<=16;
+    offset>>=16;
     CodReg=(Op>>16)&0x1F;
     modif = (Op>>22) & 0x3;
     TamModif = (~modif)&0x3;
     TamModif+=1;
-
+    Valor = Valor << (modif*8);
     //printf("%d offset \t %d codreg",offset,CodReg);
     puntero=(*MV).R[CodReg]+offset;
     PosMemoria = direccionamiento_logtofis(MV,puntero,4);
@@ -820,6 +820,7 @@ void EscriboEnMemoria(TMV *MV,int Op, int Valor){ // Guarda el valor en 4 bytes 
             Valor=Valor << 8;
     }
     MV->R[MBR] = Valor;
+
 }
 
 void modificoCC(TMV *MV,int Resultado){
@@ -876,7 +877,6 @@ void MOV(TMV * MV){
     //OPB
     guardoOpB(MV,&mover);
     //OPA
-
 
     if (((MV->R[OP1] >> 24 ) &  0XFF ) == 1){ //Si Op1 es de registro, debo cambiar la posicion de memoria del registro por la que me diga el Op1
         unsigned char SecA,CodOpA;
@@ -1807,11 +1807,15 @@ void SYS (TMV *MV){
         imprime por pantalla un rango de celdas donde se encuentra un string. Inicia en la
         posición de memoria apuntada por EDX, e imprime hasta encontrar un '\0' (0x00).
         */
-
         base=0;
         imprimible=MV->MEM[direccionamiento_logtofis(MV,MV->R[EDX]+base,0)];
+
         while(imprimible!='\0'){
-                //printf("%c %s",imprimible,"F");
+                /*if(imprimible<32 || imprimible>126) // PREGUNTAR
+                    putchar(46); // punto
+                else
+                    putchar(imprimible);
+                */
                 putchar(imprimible);
                 base+=1;
                 imprimible=MV->MEM[direccionamiento_logtofis(MV,MV->R[EDX]+base,0)];
@@ -1854,7 +1858,7 @@ void JMP (TMV *MV){
     if (sobrepasaCS(MV,asignable)==1)
         generaerror(2);
 
-    MV->R[IP]=asignable;
+    MV->R[IP]=(MV->R[IP] & 0XFFFF0000) + asignable;
 
 }
 
